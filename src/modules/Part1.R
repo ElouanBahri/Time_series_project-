@@ -19,6 +19,11 @@ library(lubridate)
 library(ggplot2)
 library(tseries)
 library(dplyr)
+install.packages("urca")
+library(urca)
+library(zoo)
+
+
 # 3. Import the series from a local CSV file downloaded from INSEE
 
 
@@ -54,7 +59,6 @@ ggplot(data_ts, aes(x = ym, y = Index)) +
 adf_log <- adf.test(data_ts$Index, alternative = "stationary")
 print(adf_log)  # If p-value > 0.05, The series is non-stationary
 
-library(zoo)
 
 data_ts %>%
   mutate(
@@ -66,7 +70,17 @@ data_ts %>%
   geom_line(aes(y = roll_mean),   color = "blue") +
   geom_line(aes(y = roll_sd * 10), color = "red") 
 
-# Even if the augmented DCF says that the series is stationary, it is evident that there is a dertministic trend downward we can test it :
+y <- data_ts$Index   # or data_ts$log_index, or data_ts$dlog_index
+
+# Plot ACF up to lag 36 (3 years of monthly data)
+acf(
+  y,
+  lag.max = 200,            # maximum lag to display
+  main    = "ACF of IPI Series",
+  ylab    = "Autocorrelation",
+  xlab    = "Lag (months)"
+)
+# It is evident that there is a dertministic trend downward we can test it :
 
 # add a simple time counter 1,2,…,T
 data_trend <- data_ts %>%
@@ -79,52 +93,256 @@ summary(fit_lin)
 #The p-value of t is very low then t is statistically significant and there is well a dertiministic trend downward
 
 
-#Correction of the deterministic trend 
 
-data_diff <- data_ts %>%
-  mutate(d1 = Index - lag(Index))
-
-# Test for unit root on the series
-adf_log <- adf.test(na.omit(data_diff$d1), alternative = "stationary")
-print(adf_log)  # If p-value > 0.05, The series is non-stationary
+#we continue to check it with ADF test
 
 
+# 1a) extract your series as a plain vector
+#    (here I assume you've stored the level in data_ts$index)
+y <- data_ts$Index  
+
+# 1b) run the ADF test allowing for an intercept + trend
+adf_trend <- ur.df(
+  y,
+  type       = "trend",    # intercept + time trend
+  selectlags = "AIC"       # choose optimal lag length
+)
+
+# 1c) inspect the output
+summary(adf_trend)
 
 
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
 
-## I am here 
+#Test regression trend 
 
 
+# Call:
+#   lm(formula = z.diff ~ z.lag.1 + 1 + tt + z.diff.lag)
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -44.050  -1.712  -0.233   2.581  26.117 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept) 49.45258    7.63379   6.478 5.35e-10 ***
+#   z.lag.1     -0.31959    0.04922  -6.493 4.91e-10 ***
+#   tt          -0.08428    0.01375  -6.129 3.67e-09 ***
+#   z.diff.lag   0.05077    0.06417   0.791     0.43    
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 6.093 on 236 degrees of freedom
+# Multiple R-squared:  0.1621,	Adjusted R-squared:  0.1514 
+# F-statistic: 15.21 on 3 and 236 DF,  p-value: 4.394e-09
+# 
+# 
+# Value of test-statistic is: -6.4934 14.239 21.2186 
+# 
+# Critical values for test statistics: 
+#   1pct  5pct 10pct
+# tau3 -3.99 -3.43 -3.13
+# phi2  6.22  4.75  4.07
+# phi3  8.43  6.49  5.47
 
 
+#then we can conclude that a AR(1) could fit and that we have stationnartiy but we have a drift and a trend are present !
 
-# 7. Test for unit root on log series
-adf_log <- adf.test(data_ts$Index, alternative = "stationary")
-print(adf_log)  # If p-value > 0.05, log series is non-stationary
+## 1 we remove the trend by  Linear detrending
 
-# 8. Difference the log series if non-stationary
-#    (first difference approximates monthly growth rates)
+# 1a) Create a simple time index
+data_ts <- data_ts %>% mutate(t = row_number())
+
+# 1b) Fit the linear trend
+fit_trend <- lm(Index ~ t, data = data_ts)
+
+# 1c) Subtract the fitted trend
 data_ts <- data_ts %>%
-  mutate(dlog_index = difference(log_index))
+  mutate(
+    trend_hat  = predict(fit_trend),
+    detrended  = Index - trend_hat
+  )
 
-# 9. Test for stationarity on differenced log series
-adf_diff <- adf.test(na.omit(data_ts$dlog_index), alternative = "stationary")
-print(adf_diff)  # Expect p-value < 0.05 indicating stationarity
+y2 <- data_ts$detrended  
 
-# 10. Plot log series and differenced log series
-p1 <- ggplot(data_ts, aes(x = month, y = log_index)) +
-  geom_line() +
-  labs(title = "Log-transformed IPI - Building Construction",
-       x = "Month", y = "Log(Index)") +
-  theme_minimal()
+# 1b) run the ADF test allowing for an intercept + trend
+adf_trend2 <- ur.df(
+  y2,
+  type       = "trend",    # intercept + time trend
+  selectlags = "AIC"       # choose optimal lag length
+)
 
-p2 <- ggplot(data_ts, aes(x = month, y = dlog_index)) +
-  geom_line() +
-  labs(title = "First Difference of Log IPI (Monthly Growth Rate)",
-       x = "Month", y = "Delta Log(Index)") +
-  theme_minimal()
+# 1c) inspect the output
+summary(adf_trend2)
 
-print(p1)
-print(p2)
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+# Test regression trend 
+# 
+# 
+# Call:
+#   lm(formula = z.diff ~ z.lag.1 + 1 + tt + z.diff.lag)
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -44.050  -1.712  -0.233   2.581  26.117 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)  0.448582   0.794183   0.565    0.573    
+# z.lag.1     -0.319587   0.049217  -6.493 4.91e-10 ***
+#   tt          -0.002933   0.005678  -0.516    0.606    
+# z.diff.lag   0.050771   0.064168   0.791    0.430    
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 6.093 on 236 degrees of freedom
+# Multiple R-squared:  0.1621,	Adjusted R-squared:  0.1514 
+# F-statistic: 15.21 on 3 and 236 DF,  p-value: 4.394e-09
+# 
+# 
+# Value of test-statistic is: -6.4934 14.1574 21.2186 
+# 
+# Critical values for test statistics: 
+#   1pct  5pct 10pct
+# tau3 -3.99 -3.43 -3.13
+# phi2  6.22  4.75  4.07
+# phi3  8.43  6.49  5.47
+
+
+
+#recheck the graph of moving average and rolling volatility 
+
+data_ts %>%
+  mutate(
+    roll_mean  = zoo::rollmean(detrended, 24, fill = NA),
+    roll_sd    = zoo::rollapply(detrended, 24, sd, fill = NA)
+  ) %>%
+  ggplot(aes(x = ym)) +
+  geom_line(aes(y = detrended)) +
+  geom_line(aes(y = roll_mean),   color = "blue") +
+  geom_line(aes(y = roll_sd * 10), color = "red") 
+
+#replot the ACF
+
+
+# Plot ACF up to lag 200
+acf(
+  y2,
+  lag.max = 200,            # maximum lag to display
+  main    = "ACF of IPI Series",
+  ylab    = "Autocorrelation",
+  xlab    = "Lag (months)"
+)
+
+#we better proof of stationnarity, let's try another method
+
+# 2 First differencing (exactly removes any linear drift)
+
+data_ts <- data_ts %>%
+  mutate(differenced = Index - lag(Index)) %>%
+  na.omit()
+
+y3 <- data_ts$differenced  
+
+# 1b) run the ADF test allowing for an intercept + trend
+adf_trend3 <- ur.df(
+  y3,
+  type       = "trend",    # intercept + time trend
+  selectlags = "AIC"       # choose optimal lag length
+)
+
+# 1c) inspect the output
+summary(adf_trend3)
+
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+# Test regression trend 
+# 
+# 
+# Call:
+#   lm(formula = z.diff ~ z.lag.1 + 1 + tt + z.diff.lag)
+# 
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -45.161  -1.756   0.094   2.270  30.525 
+# 
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)  0.021780   0.841340   0.026    0.979    
+# z.lag.1     -1.398209   0.093980 -14.878  < 2e-16 ***
+#   tt          -0.002706   0.006094  -0.444    0.657    
+# z.diff.lag   0.262852   0.063184   4.160 4.47e-05 ***
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 6.415 on 233 degrees of freedom
+# Multiple R-squared:  0.5847,	Adjusted R-squared:  0.5793 
+# F-statistic: 109.3 on 3 and 233 DF,  p-value: < 2.2e-16
+# 
+# 
+# Value of test-statistic is: -14.8777 73.7838 110.6744 
+# 
+# Critical values for test statistics: 
+#   1pct  5pct 10pct
+# tau3 -3.99 -3.43 -3.13
+# phi2  6.22  4.75  4.07
+# phi3  8.43  6.49  5.47
+
+
+#This time, we observe no more trend and drift, but the lag 1 coefficient is significant! 
+
+
+#recheck the graph of moving average and rolling volatility 
+
+data_ts %>%
+  mutate(
+    roll_mean  = zoo::rollmean(differenced, 24, fill = NA),
+    roll_sd    = zoo::rollapply(differenced, 24, sd, fill = NA)
+  ) %>%
+  ggplot(aes(x = ym)) +
+  geom_line(aes(y = differenced)) +
+  geom_line(aes(y = roll_mean),   color = "blue") +
+  geom_line(aes(y = roll_sd * 10), color = "red") 
+
+
+# We have a better stationarity around the mean, but it is a bit worse for the volatility
+
+
+#Replot the ACF
+
+
+# Plot ACF up to lag 200
+acf(
+  y3,
+  lag.max = 200,            # maximum lag to display
+  main    = "ACF of IPI Series",
+  ylab    = "Autocorrelation",
+  xlab    = "Lag (months)"
+)
+
+#We have clearly better results for the ACF function
+
+
+ggplot(data_ts, aes(x = ym, y = differenced)) +   
+  geom_line() +                            
+  labs(
+    title = "Transformed IPI – Building Construction",
+    x     = "Date",
+    y     = "Index (Base 100 = 2021)"
+  ) +
+  theme_minimal() 
+
+# We observe that the new series does not have a drift and a trend anymore we then can try to fit an AR(1)
+
 
 # End of Part 1
