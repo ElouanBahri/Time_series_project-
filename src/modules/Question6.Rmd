@@ -1,0 +1,78 @@
+## Question 6: Confidence Intervals for Forecasts
+
+### 1. One-step-ahead Forecast ($X_{T+1}$)
+
+Under Gaussian residuals, the one-step forecast error
+
+$$
+ e_{T+1} = X_{T+1} - \widehat X_{T+1}
+$$
+
+is $N(0,\sigma^2_{T+1})$, where $\sigma^2_{T+1}=Var(e_{T+1})$. A $(1-\alpha)100%$ two-sided confidence interval is
+
+$$
+\widehat X_{T+1}\;\pm\;z_{1-\alpha/2}\sqrt{\sigma^2_{T+1}}\,.
+$$
+
+Equivalently,
+
+$$
+\frac{(X_{T+1}-\widehat X_{T+1})^2}{\sigma^2_{T+1}}\le\chi^2_{1,1-\alpha},
+$$
+
+since $\chi^2_{1,1-^\alpha}=z_{1-\alpha/2}2$ for 1 degree of freedom.
+
+------------------------------------------------------------------------
+
+### 2. Joint Confidence Region for Two-step-ahead Forecasts ($X_{T+1},X_{T+2}$)
+
+Let the forecast errors
+
+$$
+e_{T+1} = X_{T+1}-\widehat X_{T+1},\quad e_{T+2}=X_{T+2}-\widehat X_{T+2}
+$$
+
+be collected in the vector $\mathbf{e} = (e_{T+1},e_{T+2})'$. Under Gaussianity,
+
+$$
+\mathbf{e} \sim N\bigl(0,\Sigma\bigr),
+$$
+
+where
+
+$$
+\Sigma = \begin{pmatrix}
+Var(e_{T+1}) & Cov(e_{T+1},e_{T+2})\\
+Cov(e_{T+1},e_{T+2}) & Var(e_{T+2})
+\end{pmatrix}.
+$$
+
+A $(1-\alpha)100%$ joint confidence region is the ellipse defined by
+
+$$
+\mathbf{e}'\,\Sigma^{-1}\,\mathbf{e}
+\;=\;
+\begin{pmatrix}X_{T+1}-\widehat X_{T+1}, & X_{T+2}-\widehat X_{T+2}\end{pmatrix}
+\,\Sigma^{-1}\,
+\begin{pmatrix}X_{T+1}-\widehat X_{T+1}\\X_{T+2}-\widehat X_{T+2}\end{pmatrix}
+\le\chi^2_{2,1-\alpha}
+$$
+
+where $\chi^2_{2,1-\alpha}$ is the $(1-\alpha)$ quantile of the chi-squared distribution with 2 degrees of freedom.
+
+#### Expanded form with variances and correlation
+
+Let $\sigma_1^2=Var(e_{T+1})$, $\sigma_2^2=Var(e_{T+2})$, and $\rho=Corr(e_{T+1},e_{T+2})$. The region can be written as:
+
+$$
+\frac{1}{1-\rho^2}\Biggl[
+\frac{(X_{T+1}-\widehat X_{T+1})^2}{\sigma_1^2}
+-2\rho\frac{(X_{T+1}-\widehat X_{T+1})(X_{T+2}-\widehat X_{T+2})}{\sigma_1\sigma_2}
++\frac{(X_{T+2}-\widehat X_{T+2})^2}{\sigma_2^2}
+\Biggr]
+\le\chi^2_{2,1-\alpha}.
+$$
+
+------------------------------------------------------------------------
+
+**In practice**, most software (e.g. `forecast::forecast()`) will compute and plot 95% marginal intervals for each horizon separately, but you can recover $\Sigma$ and construct the full ellipse if you need a joint region.

@@ -1,0 +1,47 @@
+## Question 7:  Hypotheses for the Level-$(1-\alpha)$ Joint Confidence Region for $(X_{T+1},X_{T+2})$
+
+The joint confidence region is derived under the following assumptions:
+
+1.  **Correct Model Specification** The chosen ARIMA$(p,d,q)$ model accurately represents the data-generating process, so that forecast formulas for $\widehat X_{T+h}$ and their variances are valid.
+
+2.  **Gaussian Innovations** The model residuals (one-step-ahead forecast errors) are independent and identically distributed:
+
+    $$
+      \varepsilon_t \sim N(0,\sigma^2)
+    $$
+
+    which implies that the vector of future forecast errors is jointly normal.
+
+3.  **Zero-Mean Forecast Errors** The forecast-error vector
+
+    $$
+      \mathbf{e} = \begin{pmatrix}e_{T+1}\\ e_{T+2}\end{pmatrix} = \begin{pmatrix}X_{T+1}-\widehat X_{T+1}\\ X_{T+2}-\widehat X_{T+2}\end{pmatrix}
+    $$
+
+    has expectation $\mathbb{E}[\mathbf{e}] = \mathbf{0}$.
+
+4.  **Known (or Consistently Estimated) Covariance Matrix** The covariance of the forecast errors is given by
+
+    $$
+      \Sigma = \mathrm{Cov}(\mathbf{e}) =
+      \begin{pmatrix}
+        Var(e_{T+1}) & Cov(e_{T+1},e_{T+2})\\
+        Cov(e_{T+1},e_{T+2}) & Var(e_{T+2})
+      \end{pmatrix},
+    $$
+
+    which is either known in theory or estimated consistently by the model’s built-in forecast-error variance formulas.
+
+5.  **Negligible Parameter-Estimation Uncertainty** When constructing the region, the ARIMA parameters and the covariance matrix $\Sigma$ are treated as fixed (plug-in estimates), attributing all remaining uncertainty to the Gaussian forecast errors.
+
+**Under these hypotheses**, the forecast-error quadratic form follows a chi-squared distribution:
+
+$$
+  \mathbf{e}'\,\Sigma^{-1}\,\mathbf{e} \;\sim\; \chi^2_2,
+$$
+
+and thus the level-$(1-\alpha)$ joint confidence region is the set of $(X_{T+1},X_{T+2})$ satisfying:
+
+$$
+ \mathbf{e}'\,\Sigma^{-1}\,\mathbf{e} \;\le\; \chi^2_{2,1-\alpha}.
+$$
