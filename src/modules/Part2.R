@@ -1,6 +1,6 @@
 ###• Part II : ARMA models
-##Question 4
 
+################################### Question 4 ################################### 
 #We look at the ACF/PACF 
 
 install.packages("forecast")
@@ -155,7 +155,7 @@ checkresiduals(fit_ar4)
 
 #If p-value > 0.05, you fail to reject ⇒ residuals behave like white noise.
 
-#Question 5 
+################################### Question 5 ################################### 
 
 # Since I have differenced the series once to obtain “differenced,” an ARIMA(0,1,2) or ARIMA(4,1,0) model could fit.
 

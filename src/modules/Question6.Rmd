@@ -1,78 +1,179 @@
 ## Question 6: Confidence Intervals for Forecasts
 
+## Confidence Intervals for Forecasts
+
 ### 1. One-step-ahead Forecast ($X_{T+1}$)
 
-Under Gaussian residuals, the one-step forecast error
-
-$$
- e_{T+1} = X_{T+1} - \widehat X_{T+1}
-$$
-
-is $N(0,\sigma^2_{T+1})$, where $\sigma^2_{T+1}=Var(e_{T+1})$. A $(1-\alpha)100%$ two-sided confidence interval is
-
-$$
-\widehat X_{T+1}\;\pm\;z_{1-\alpha/2}\sqrt{\sigma^2_{T+1}}\,.
+After fitting an ARIMA model, the one‐step‐ahead forecast and its error are $$
+\widehat X_{T+1} = \mathbb{E}[X_{T+1}\mid\mathcal{F}_T], 
+\qquad
+e_{T+1} = X_{T+1} - \widehat X_{T+1}.
+$$ Under the Gaussian‐innovations assumption, $$
+e_{T+1}\;\sim\;N\bigl(0,\;\sigma^2_{T+1}\bigr).
 $$
 
-Equivalently,
-
+We seek $[L,U]$ such that $$
+P\bigl(L \le X_{T+1}\le U\mid\mathcal{F}_T\bigr)=1-\alpha.
+$$ Substitute $X_{T+1}=\widehat X_{T+1}+e_{T+1}$, $$
+P\bigl(L-\widehat X_{T+1}\le e_{T+1}\le U-\widehat X_{T+1}\bigr)=1-\alpha.
+$$ Standardize $Z=e_{T+1}/\sigma_{T+1}\sim N(0,1)$: $$
+P\Bigl(\tfrac{L-\widehat X_{T+1}}{\sigma_{T+1}}\le Z\le \tfrac{U-\widehat X_{T+1}}{\sigma_{T+1}}\Bigr)
+=1-\alpha.
+$$ By symmetry, choose $$
+\frac{L-\widehat X_{T+1}}{\sigma_{T+1}}=-z_{1-\alpha/2},
+\quad
+\frac{U-\widehat X_{T+1}}{\sigma_{T+1}}=+z_{1-\alpha/2},
+$$ so $$
+L=\widehat X_{T+1}-z_{1-\alpha/2}\,\sigma_{T+1},
+\quad
+U=\widehat X_{T+1}+z_{1-\alpha/2}\,\sigma_{T+1}.
+$$ Thus the $(1-\alpha)100\%$ interval is $$
+\widehat X_{T+1}\;\pm\;z_{1-\alpha/2}\,\sigma_{T+1}.
 $$
-\frac{(X_{T+1}-\widehat X_{T+1})^2}{\sigma^2_{T+1}}\le\chi^2_{1,1-\alpha},
-$$
-
-since $\chi^2_{1,1-^\alpha}=z_{1-\alpha/2}2$ for 1 degree of freedom.
 
 ------------------------------------------------------------------------
 
 ### 2. Joint Confidence Region for Two-step-ahead Forecasts ($X_{T+1},X_{T+2}$)
 
-Let the forecast errors
-
-$$
-e_{T+1} = X_{T+1}-\widehat X_{T+1},\quad e_{T+2}=X_{T+2}-\widehat X_{T+2}
-$$
-
-be collected in the vector $\mathbf{e} = (e_{T+1},e_{T+2})'$. Under Gaussianity,
-
-$$
-\mathbf{e} \sim N\bigl(0,\Sigma\bigr),
-$$
-
-where
-
-$$
-\Sigma = \begin{pmatrix}
-Var(e_{T+1}) & Cov(e_{T+1},e_{T+2})\\
+Define the forecast‐error vector $$
+\mathbf{e}
+=
+\begin{pmatrix}
+e_{T+1}\\
+e_{T+2}
+\end{pmatrix}
+=
+\begin{pmatrix}
+X_{T+1}-\widehat X_{T+1}\\
+X_{T+2}-\widehat X_{T+2}
+\end{pmatrix}.
+$$ Under Gaussian innovations, $$
+\mathbf{e}\sim N\bigl(\mathbf{0},\,\Sigma\bigr),
+\quad
+\Sigma
+=
+\begin{pmatrix}
+Var(e_{T+1}) & Cov(e_{T+1},e_{T+2})\\[6pt]
 Cov(e_{T+1},e_{T+2}) & Var(e_{T+2})
 \end{pmatrix}.
-$$
-
-A $(1-\alpha)100%$ joint confidence region is the ellipse defined by
-
-$$
-\mathbf{e}'\,\Sigma^{-1}\,\mathbf{e}
+$$ A standard result gives the **Mahalanobis distance** $$
+Q=\mathbf{e}^\top\Sigma^{-1}\mathbf{e}
+\;\sim\;\chi^2_2.
+$$ Hence the $(1-\alpha)100\%$ joint region is the ellipse $$
+\mathbf{e}^\top\Sigma^{-1}\mathbf{e}
 \;=\;
-\begin{pmatrix}X_{T+1}-\widehat X_{T+1}, & X_{T+2}-\widehat X_{T+2}\end{pmatrix}
-\,\Sigma^{-1}\,
+\begin{pmatrix}X_{T+1}-\widehat X_{T+1},&X_{T+2}-\widehat X_{T+2}\end{pmatrix}
+\Sigma^{-1}
 \begin{pmatrix}X_{T+1}-\widehat X_{T+1}\\X_{T+2}-\widehat X_{T+2}\end{pmatrix}
-\le\chi^2_{2,1-\alpha}
+\;\le\;\chi^2_{2,\,1-\alpha}.
 $$
 
-where $\chi^2_{2,1-\alpha}$ is the $(1-\alpha)$ quantile of the chi-squared distribution with 2 degrees of freedom.
+with : $P(Q≤χ^2_{2,1−α})=1−α.$
 
-#### Expanded form with variances and correlation
+#### Expanded form
 
-Let $\sigma_1^2=Var(e_{T+1})$, $\sigma_2^2=Var(e_{T+2})$, and $\rho=Corr(e_{T+1},e_{T+2})$. The region can be written as:
-
-$$
+Let $\sigma_1^2=Var(e_{T+1})$, $\sigma_2^2=Var(e_{T+2})$, $\rho=Corr(e_{T+1},e_{T+2})$. Then $$
 \frac{1}{1-\rho^2}\Biggl[
 \frac{(X_{T+1}-\widehat X_{T+1})^2}{\sigma_1^2}
 -2\rho\frac{(X_{T+1}-\widehat X_{T+1})(X_{T+2}-\widehat X_{T+2})}{\sigma_1\sigma_2}
 +\frac{(X_{T+2}-\widehat X_{T+2})^2}{\sigma_2^2}
 \Biggr]
-\le\chi^2_{2,1-\alpha}.
+\;\le\;\chi^2_{2,\,1-\alpha}.
+$$
+
+## In our case
+
+## Derivation of the Forecast‐Error Covariance Matrix Σ for ARIMA(0,1,2)
+
+Your fitted model in first‐difference form is\
+$$
+\Delta X_t \;=\; X_t - X_{t-1}
+\;=\;
+\varepsilon_t \;+\;\theta_1\,\varepsilon_{t-1}\;+\;\theta_2\,\varepsilon_{t-2},
+\quad
+\varepsilon_t\overset{\text{iid}}{\sim}N(0,\sigma^2).
+$$ Equivalently, $$
+X_t = X_{t-1} + \varepsilon_t + \theta_1\,\varepsilon_{t-1} + \theta_2\,\varepsilon_{t-2}.
 $$
 
 ------------------------------------------------------------------------
 
-**In practice**, most software (e.g. `forecast::forecast()`) will compute and plot 95% marginal intervals for each horizon separately, but you can recover $\Sigma$ and construct the full ellipse if you need a joint region.
+### 1. One‐step‐ahead forecast error $e_{T+1}$
+
+-   **Forecast increment**:\
+    $\widehat{\Delta X}_{T+1} = \theta_1\,\varepsilon_T + \theta_2\,\varepsilon_{T-1}.$\
+    because $\widehat{\Delta X}_{T+1} = \mathbb{E}[\Delta X_{T+1}\mid\mathcal{F}_T\bigr]= \mathbb{E}[\varepsilon_{T+1}\mid\mathcal{F}_T\bigr] +\theta_1\varepsilon_T + \theta_2\varepsilon_{T-1}$
+
+    and $\mathbb{E}[\varepsilon_{T+1}\mid\mathcal{F}_T\bigr]$ = 0
+
+-   **Forecasted level**:\
+    $\widehat X_{T+1} = X_T + \widehat{\Delta X}_{T+1}.$\
+
+-   **Error**:\
+    $$
+      e_{T+1}
+      = X_{T+1} - \widehat X_{T+1}
+      = \bigl(X_T + \Delta X_{T+1}\bigr)
+        - \bigl(X_T + \widehat{\Delta X}_{T+1}\bigr)
+      = \Delta X_{T+1} - \widehat{\Delta X}_{T+1}
+      = \varepsilon_{T+1}.
+    $$
+
+-   **Variance**:\
+    $Var(e_{T+1}) = Var(\varepsilon_{T+1}) = \sigma^2.$
+
+------------------------------------------------------------------------
+
+### 2. Two‐step‐ahead forecast error $e_{T+2}$
+
+-   **True increment**:\
+    $\Delta X_{T+2} = \varepsilon_{T+2} + \theta_1\,\varepsilon_{T+1} + \theta_2\,\varepsilon_T.$\
+-   **Forecast increment**:\
+    $\widehat{\Delta X}_{T+2} = \theta_1\,\underbrace{\mathbb{E}[\varepsilon_{T+1}]}_{0} + \theta_2\,\varepsilon_T = \theta_2\,\varepsilon_T.$\
+-   **Error**:\
+    $$
+      e_{T+2}
+      = \Delta X_{T+2} - \widehat{\Delta X}_{T+2}
+      = \bigl[\varepsilon_{T+2} + \theta_1\,\varepsilon_{T+1} + \theta_2\,\varepsilon_T\bigr]
+        - \theta_2\,\varepsilon_T
+      = \varepsilon_{T+2} + \theta_1\,\varepsilon_{T+1}.
+    $$
+-   **Variance**:\
+    By independence, $$
+      Var(e_{T+2})
+      = Var(\varepsilon_{T+2}) + \theta_1^2\,Var(\varepsilon_{T+1})
+      = \sigma^2 + \theta_1^2\,\sigma^2
+      = \sigma^2\bigl(1 + \theta_1^2\bigr).
+    $$
+
+------------------------------------------------------------------------
+
+### 3. Covariance between $e_{T+1}$ and $e_{T+2}$
+
+$$
+Cov(e_{T+1},e_{T+2})
+= Cov\bigl(\varepsilon_{T+1},\,\varepsilon_{T+2} + \theta_1\,\varepsilon_{T+1}\bigr)
+= 0 + \theta_1\,Var(\varepsilon_{T+1})
+= \theta_1\,\sigma^2.
+$$
+
+------------------------------------------------------------------------
+
+### 4. Assemble Σ and plug in estimates
+
+With your estimates $\hat\theta_1 = -0.2731$ and $\hat\sigma^2 = 37.98$:
+
+1.  $Var(e_{T+1}) = \hat\sigma^2 = 37.98.$\
+2.  $Cov(e_{T+1},e_{T+2}) = \hat\theta_1\,\hat\sigma^2 = -0.2731 \times 37.98 \approx -10.38.$\
+3.  $Var(e_{T+2}) = 37.98 \times (1 + (-0.2731)^2) \approx 40.85.$
+
+Hence the forecast‐error covariance matrix is
+
+$$
+\Sigma
+=
+\begin{pmatrix}
+37.98 & -10.38\\[4pt]
+-10.38 & 40.85
+\end{pmatrix}.
+$$

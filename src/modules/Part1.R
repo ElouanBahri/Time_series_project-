@@ -1,6 +1,6 @@
 # PART 1: Exploratory analysis and stationarity transformation for the Building Construction IPI series
-# ==============================================================================
-# 1. Description of the series:
+# ################################### Question 1 ################################### 
+# Description of the series:
 #    - "Indice CVS-CJO de la production industrielle (base 100 en 2021) - Construction de bâtiments"
 #    - Monthly frequency, seasonally and working-day adjusted (CVS-CJO) volume index (NACE div. 41).
 #    - Base year 2021 = 100. Values >100 indicate production above the 2021 average.
@@ -44,6 +44,13 @@ data_ts <- data_raw %>%
   
   # 4) finally turn into a tsibble
   as_tsibble(index = ym)
+
+
+
+
+################################### Question 2&3 ################################### 
+
+
 
 ## 4. Analyze the raw series to check stationarity
 ggplot(data_ts, aes(x = ym, y = Index)) +   
