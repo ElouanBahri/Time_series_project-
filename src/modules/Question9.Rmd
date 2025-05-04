@@ -72,7 +72,7 @@ Suppose we have two sets of one‐step‐ahead forecasts for $X_t$:
 3.  **Hypotheses**
     -   $H_0: \mathbb{E}[d_t] = 0$\
         (no difference in mean squared error between the two forecasts).\
-    -   $H_1:  \mathbb{E}[d_t] > 0$\
+    -   $H_1: \mathbb{E}[d_t] > 0$\
         (the augmented forecast has strictly lower MSE on average).
 4.  **Decision Rule**
     -   If $\mathrm{DM}$ is larger than the critical value from the $t$-distribution (or its one‐sided p‐value \< $\alpha$), **reject** $H_0$.\
