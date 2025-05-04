@@ -6,12 +6,18 @@
 #    - Base year 2021 = 100. Values >100 indicate production above the 2021 average.
 #    - Because the index is multiplicative in nature, log-transformation could help to stabilize variance.
 
-# 2. Load required packages
+# 2. Load required packages for all the project
 if (!requireNamespace("readr", quietly = TRUE)) install.packages("readr")
 if (!requireNamespace("tsibble", quietly = TRUE)) install.packages("tsibble")
 if (!requireNamespace("lubridate", quietly = TRUE)) install.packages("lubridate")
 if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
 if (!requireNamespace("tseries", quietly = TRUE)) install.packages("tseries")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+if (!requireNamespace("urca", quietly = TRUE)) install.packages("urca")
+if (!requireNamespace("zoo", quietly = TRUE)) install.packages("zoo")
+if (!requireNamespace("forecast", quietly = TRUE)) install.packages("forecast")
+if (!requireNamespace("ellipse", quietly = TRUE)) install.packages("ellipse")
+
 
 library(readr)
 library(tsibble)
@@ -19,10 +25,10 @@ library(lubridate)
 library(ggplot2)
 library(tseries)
 library(dplyr)
-install.packages("urca")
 library(urca)
 library(zoo)
-
+library(forecast)
+library(ellipse)
 
 # 3. Import the series from a local CSV file downloaded from INSEE
 

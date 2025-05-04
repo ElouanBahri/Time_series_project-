@@ -3,8 +3,6 @@
 ################################### Question 4 ################################### 
 #We look at the ACF/PACF 
 
-install.packages("forecast")
-library(forecast)
 
 # suppose your cleaned series is in data_ts$differenced 
 x <- na.omit(data_ts$differenced)  

@@ -2,10 +2,6 @@
 
 #Some prediction 
 
-library(forecast)
-
-
-
 fit <- Arima(y, order = c(0,1,2), include.constant=FALSE)
 
 # 1) Forecast the next H points, e.g. next 12 months
@@ -46,8 +42,7 @@ Sigma <- sigma2 * matrix(c(
 alpha <- 0.05
 crit  <- qchisq(1 - alpha, df = 2)   # ≈ 5.991
 
-install.packages("ellipse")   
-library(ellipse)
+
 
 el <- ellipse(Sigma, centre = c(mu1, mu2), level = 1 - alpha)
 plot(el, type = "l", asp = 1,

@@ -1,0 +1,83 @@
+### 9. Open question: Using $Y_{T+1}$ to Improve the Forecast of $X_{T+1}$
+
+We observe two stationary series $\{X_t\}$ and $\{Y_t\}$ up to $t=T$. At time $T+1$, you receive the new value $Y_{T+1}$ before seeing $X_{T+1}$. Under what condition does $Y_{T+1}$ help forecast $X_{T+1}$, and how would you test it?
+
+------------------------------------------------------------------------
+
+#### Key condition
+
+Having $Y_{T+1}$ improves your one‐step forecast of $X_{T+1}$ if and only if $$
+\mathbb{E}\bigl[X_{T+1}\mid\mathcal{F}_T,\,Y_{T+1}\bigr]
+\;\neq\;
+\mathbb{E}\bigl[X_{T+1}\mid\mathcal{F}_T\bigr],
+$$ where $\mathcal{F}_T$ is the information set up to time $T$. Equivalently, $$
+Cov\bigl(Y_{T+1},\,X_{T+1}-\mathbb{E}[X_{T+1}\mid\mathcal{F}_T]\;\big|\;\mathcal{F}_T\bigr)
+\;\neq\;0.
+$$ In plain English: the new $Y$-value must carry information about the innovation in $X_{T+1}$ beyond what $X$’s own past provides.
+
+------------------------------------------------------------------------
+
+#### Practical testing strategies
+
+1.  **Nested regression test**
+    -   **Baseline model:**\
+        $$
+          X_{T+1} = f\bigl(X_T,X_{T-1},\dots\bigr) + \varepsilon_{T+1}.
+        $$
+    -   **Augmented model:**\
+        $$
+          X_{T+1} = f\bigl(X_T,X_{T-1},\dots\bigr)
+                    \;+\;\beta\,Y_{T+1}
+                    \;+\;u_{T+1}.
+        $$
+    -   **Test** $H_0:\beta=0$. Rejecting $H_0$ implies $Y_{T+1}$ adds significant predictive power.
+2.  **Forecast‐comparison (Diebold–Mariano) test**
+    -   Produce two sets of one‐step forecasts on a hold‐out sample:
+        1.  $\hat X_{T+1}^{(0)}$ using only $X$’s past.\
+        2.  $\hat X_{T+1}^{(1)}$ using both $X$’s past and $Y_{T+1}$.\
+    -   Apply the Diebold–Mariano test to the sequences of forecast errors\
+        $\{(X-\hat X^{(0)})^2\}$ vs. $\{(X-\hat X^{(1)})^2\}$.\
+    -   A significant DM statistic favors the augmented forecast.
+
+If any of these tests reject their null hypothesis of “no additional information,” then observing $Y_{T+1}$ early **improves** your forecast of $X_{T+1}$.
+
+### Explanation of the Diebold–Mariano Test for Comparing Forecasts
+
+Suppose we have two sets of one‐step‐ahead forecasts for $X_t$:
+
+-   $\displaystyle \hat X_t^{(0)}$: baseline forecast using only $X$’s past.
+-   $\displaystyle \hat X_t^{(1)}$: augmented forecast using $X$’s past **and** the extra information (e.g. $Y_{T+1}$).
+
+1.  **Loss Differential**\
+    For each time $t$ in the evaluation sample, define\
+    $$
+      d_t
+      \;=\;
+      \bigl(X_t - \hat X_t^{(0)}\bigr)^2
+      \;-\;
+      \bigl(X_t - \hat X_t^{(1)}\bigr)^2.
+    $$
+    -   If $d_t > 0$, the augmented forecast had a smaller squared error at time $t$.
+2.  **Average Differential & DM Statistic**
+    -   Compute the mean loss differential: $$
+          \bar d = \frac{1}{N} \sum_{t=1}^N d_t.
+        $$
+    -   Estimate its variance $\widehat{Var}(\bar d)$ (e.g. via a Newey–West HAC estimator to allow for serial correlation in $d_t$).\
+    -   Form the DM statistic: $$
+          \mathrm{DM}
+          =
+          \frac{\bar d}{\sqrt{\widehat{Var}(\bar d)}}
+          \;\approx\; t_{\nu},
+        $$ where $\nu$ is the effective degrees of freedom.
+3.  **Hypotheses**
+    -   $H_0: \mathbb{E}[d_t] = 0$\
+        (no difference in mean squared error between the two forecasts).\
+    -   $H_1:  \mathbb{E}[d_t] > 0$\
+        (the augmented forecast has strictly lower MSE on average).
+4.  **Decision Rule**
+    -   If $\mathrm{DM}$ is larger than the critical value from the $t$-distribution (or its one‐sided p‐value \< $\alpha$), **reject** $H_0$.\
+    -   Conclude that the augmented forecast is **significantly** more accurate than the baseline.
+
+------------------------------------------------------------------------
+
+Using the DM test on the sequences $\{(X_t-\hat X_t^{(0)})^2\}$ versus $\{(X_t-\hat X_t^{(1)})^2\}$ therefore tells you whether the extra information (e.g. $Y_{T+1}$) yields a **statistically significant** improvement in predicting $X_{T+1}$.

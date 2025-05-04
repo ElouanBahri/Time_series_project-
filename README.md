@@ -1,25 +1,10 @@
+# Time Series Project
 
-# ☑ MC project
+A reproducible R project for modeling and forecasting the French Industrial Production Index (IPI) series. We use **renv** to lock package versions and an RStudio project file to ensure everyone works in the same context.
 
-This project uses **Python == 3.11**.
+## Overview
 
-## 1. Installation
-
-### 1.1. Virtual environment
-```bash
-conda env create -f src/environment/conda_dependencies.yml
-conda activate MC_project_env
-```
-
-### 1.2. Dev guidelines
-
-1. To update your environment, make sure to run :
-```bash
-pip install -r src/environment/requirements.txt
-```
-
-2. To format your code, you can run :
-```bash
-invoke format
-```
+- We chose the IPI series for Building Construction (CVS-CJO, base 100 = 2021).  
+- We cleaned and transformed the data, tested for stationarity, and selected an ARIMA(0,1,2) model.  
+- We derived one- and two-step forecast intervals and a joint 95% confidence ellipse.  
 
