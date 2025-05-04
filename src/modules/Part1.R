@@ -4,7 +4,6 @@
 #    - "Indice CVS-CJO de la production industrielle (base 100 en 2021) - Construction de bâtiments"
 #    - Monthly frequency, seasonally and working-day adjusted (CVS-CJO) volume index (NACE div. 41).
 #    - Base year 2021 = 100. Values >100 indicate production above the 2021 average.
-#    - Because the index is multiplicative in nature, log-transformation could help to stabilize variance.
 
 # 2. Load required packages for all the project
 if (!requireNamespace("readr", quietly = TRUE)) install.packages("readr")
@@ -68,9 +67,6 @@ ggplot(data_ts, aes(x = ym, y = Index)) +
   ) +
   theme_minimal() 
 
-# Test for unit root on the series
-adf_log <- adf.test(data_ts$Index, alternative = "stationary")
-print(adf_log)  # If p-value > 0.05, The series is non-stationary
 
 
 data_ts %>%
@@ -162,7 +158,7 @@ summary(adf_trend)
 # phi3  8.43  6.49  5.47
 
 
-#then we can conclude that a AR(1) could fit and that we have stationnartiy but we have a drift and a trend are present !
+#then we can conclude we have stationnartiy but we have a drift and a trend are present !
 
 ## 1 we remove the trend by  Linear detrending
 
@@ -355,7 +351,7 @@ ggplot(data_ts, aes(x = ym, y = differenced)) +
   ) +
   theme_minimal() 
 
-# We observe that the new series does not have a drift and a trend anymore we then can try to fit an AR(1)
+# We observe that the new series does not have a drift and a trend anymore.
 
 
 # End of Part 1
