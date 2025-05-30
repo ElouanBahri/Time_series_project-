@@ -368,7 +368,7 @@ summary(adf_trend3)
 # 
 # Coefficients:
 #   Estimate Std. Error t value Pr(>|t|)    
-# z.lag.1     -2.28954    0.24724  -9.260  < 2e-16 ***
+#   z.lag.1     -2.28954    0.24724  -9.260  < 2e-16 ***
 #   z.diff.lag1  1.05822    0.21746   4.866 2.12e-06 ***
 #   z.diff.lag2  0.69133    0.18348   3.768 0.000209 ***
 #   z.diff.lag3  0.43989    0.14452   3.044 0.002609 ** 
