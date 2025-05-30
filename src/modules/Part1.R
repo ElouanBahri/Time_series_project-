@@ -110,14 +110,65 @@ summary(fit_lin)
 #    (here I assume you've stored the level in data_ts$index)
 y <- data_ts$Index  
 
-# 1b) run the ADF test allowing for an intercept + trend
+#1b) We have to find the right lag order for the ADF test 
+Qtests <- function(series, k, fitdf = 0) {
+  pvals <- sapply(1:k, function(l) {
+    if (l <= fitdf) {
+      return(NA)
+    } else {
+      return(Box.test(series, lag = l, type = "Ljung-Box", fitdf = fitdf)$p.value)
+    }
+  })
+  out <- data.frame(lag = 1:k, pval = pvals)
+  return(out)
+}
+
+adf_until_white <- function(series, kmax = 24, type = "ct") {
+  k <- 0
+  noautocorr <- FALSE
+  while (!noautocorr && k <= kmax) {
+    cat(paste0("ADF with ", k, " lags: residuals OK? "))
+    
+    adf <- ur.df(series, lags = k, type = ifelse(type == "c", "drift", ifelse(type == "ct", "trend", "none")))
+    
+    # Run Ljung-Box tests up to lag 24, adjusting for number of regressors
+    pvals_df <- Qtests(adf@testreg$residuals, 24, fitdf = length(adf@testreg$coefficients))
+    
+    if (sum(pvals_df$pval < 0.05, na.rm = TRUE) == 0) {
+      noautocorr <- TRUE
+      cat("OK ✅\n")
+    } else {
+      cat("nope ❌\n")
+      k <- k + 1
+    }
+  }
+  
+  if (k > kmax) {
+    warning("Maximum number of lags reached without achieving white residuals.")
+  }
+  
+  return(adf)
+}
+
+adf_result <- adf_until_white(y, 24, "ct")
+
+
+#After adding 3 lags, the residuals were no longer autocorrelated (based on Ljung-Box tests up to lag 24).
+#We have now to perform an ADF test of laf order 3.
+
+#ADF with 0 lags: residuals OK? nope ❌
+#ADF with 1 lags: residuals OK? nope ❌
+#ADF with 2 lags: residuals OK? nope ❌
+#ADF with 3 lags: residuals OK? OK ✅
+
+# 1c) run the ADF test allowing for an intercept + trend
 adf_trend <- ur.df(
   y,
   type       = "trend",    # intercept + time trend
-  selectlags = "AIC"       # choose optimal lag length
+  lags = 3         # select 3 as lag order
 )
 
-# 1c) inspect the output
+# 1d) inspect the output
 summary(adf_trend)
 
 
@@ -125,37 +176,40 @@ summary(adf_trend)
 # Augmented Dickey-Fuller Test Unit Root Test # 
 ############################################### 
 
-#Test regression trend 
-
-
+# Test regression trend 
+# 
+# 
 # Call:
 #   lm(formula = z.diff ~ z.lag.1 + 1 + tt + z.diff.lag)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -44.050  -1.712  -0.233   2.581  26.117 
+# -44.821  -1.690  -0.028   2.428  20.562 
 # 
 # Coefficients:
 #   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept) 49.45258    7.63379   6.478 5.35e-10 ***
-#   z.lag.1     -0.31959    0.04922  -6.493 4.91e-10 ***
-#   tt          -0.08428    0.01375  -6.129 3.67e-09 ***
-#   z.diff.lag   0.05077    0.06417   0.791     0.43    
+# (Intercept) 41.17577    8.75236   4.705 4.37e-06 ***
+#   z.lag.1     -0.26529    0.05629  -4.713 4.21e-06 ***
+#   tt          -0.07155    0.01552  -4.611 6.63e-06 ***
+#   z.diff.lag1 -0.01417    0.07098  -0.200   0.8419    
+#   z.diff.lag2 -0.15866    0.06585  -2.409   0.0168 *  
+#   z.diff.lag3 -0.07746    0.06458  -1.200   0.2315    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 6.093 on 236 degrees of freedom
-# Multiple R-squared:  0.1621,	Adjusted R-squared:  0.1514 
-# F-statistic: 15.21 on 3 and 236 DF,  p-value: 4.394e-09
+# Residual standard error: 6.057 on 232 degrees of freedom
+# Multiple R-squared:  0.1839,	Adjusted R-squared:  0.1664 
+# F-statistic: 10.46 on 5 and 232 DF,  p-value: 4.582e-09
 # 
 # 
-# Value of test-statistic is: -6.4934 14.239 21.2186 
-# 
+# Value of test-statistic is: -4.7128 7.7748 11.2998 
+
 # Critical values for test statistics: 
 #   1pct  5pct 10pct
 # tau3 -3.99 -3.43 -3.13
 # phi2  6.22  4.75  4.07
 # phi3  8.43  6.49  5.47
+
 
 
 #then we can conclude we have stationnartiy but we have a drift and a trend are present !
@@ -177,14 +231,29 @@ data_ts <- data_ts %>%
 
 y2 <- data_ts$detrended  
 
-# 1b) run the ADF test allowing for an intercept + trend
+
+#"nc" = no constant, no trend
+
+#"c" = constant only (intercept)
+
+#"ct" = constant + trend
+
+#1d) We have to find the right lag order for the ADF test
+adf_result <- adf_until_white(y2, 24, "c")
+
+# ADF with 1 lags: residuals OK? nope ❌
+# ADF with 2 lags: residuals OK? nope ❌
+# ADF with 3 lags: residuals OK? nope ❌
+# ADF with 4 lags: residuals OK? OK ✅
+
+# 1e) run the ADF test allowing for an intercept + trend
 adf_trend2 <- ur.df(
   y2,
-  type       = "trend",    # intercept + time trend
-  selectlags = "AIC"       # choose optimal lag length
+  type = "drift",    # intercept only
+  lags = 4       # choose optimal lag length
 )
 
-# 1c) inspect the output
+# 1f) inspect the output
 summary(adf_trend2)
 
 
@@ -192,37 +261,38 @@ summary(adf_trend2)
 # Augmented Dickey-Fuller Test Unit Root Test # 
 ############################################### 
 
-# Test regression trend 
+# Test regression drift 
 # 
 # 
 # Call:
-#   lm(formula = z.diff ~ z.lag.1 + 1 + tt + z.diff.lag)
+#   lm(formula = z.diff ~ z.lag.1 + 1 + z.diff.lag)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -44.050  -1.712  -0.233   2.581  26.117 
+# -45.544  -1.720   0.126   2.412  19.456 
 # 
 # Coefficients:
 #   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)  0.448582   0.794183   0.565    0.573    
-# z.lag.1     -0.319587   0.049217  -6.493 4.91e-10 ***
-#   tt          -0.002933   0.005678  -0.516    0.606    
-# z.diff.lag   0.050771   0.064168   0.791    0.430    
+# (Intercept)  0.12848    0.39334   0.327  0.74424    
+#   z.lag.1     -0.24511    0.05891  -4.161 4.48e-05 ***
+#   z.diff.lag1 -0.03992    0.07410  -0.539  0.59064    
+#   z.diff.lag2 -0.19219    0.07090  -2.711  0.00721 ** 
+#   z.diff.lag3 -0.09978    0.06662  -1.498  0.13560    
+#   z.diff.lag4 -0.08958    0.06471  -1.384  0.16763    
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 6.093 on 236 degrees of freedom
-# Multiple R-squared:  0.1621,	Adjusted R-squared:  0.1514 
-# F-statistic: 15.21 on 3 and 236 DF,  p-value: 4.394e-09
+# Residual standard error: 6.051 on 231 degrees of freedom
+# Multiple R-squared:  0.1886,	Adjusted R-squared:  0.171 
+# F-statistic: 10.74 on 5 and 231 DF,  p-value: 2.695e-09
 # 
 # 
-# Value of test-statistic is: -6.4934 14.1574 21.2186 
+# Value of test-statistic is: -4.1607 8.6753 
 # 
 # Critical values for test statistics: 
 #   1pct  5pct 10pct
-# tau3 -3.99 -3.43 -3.13
-# phi2  6.22  4.75  4.07
-# phi3  8.43  6.49  5.47
+# tau2 -3.46 -2.88 -2.57
+# phi1  6.52  4.63  3.81
 
 
 
@@ -260,14 +330,25 @@ data_ts <- data_ts %>%
 
 y3 <- data_ts$differenced  
 
-# 1b) run the ADF test allowing for an intercept + trend
+#1b) We have to find the right lag order for the ADF test
+
+adf_result <- adf_until_white(y3, 24, "nc")
+
+# ADF with 0 lags: residuals OK? nope ❌
+# ADF with 1 lags: residuals OK? nope ❌
+# ADF with 2 lags: residuals OK? nope ❌
+# ADF with 3 lags: residuals OK? nope ❌
+# ADF with 4 lags: residuals OK? nope ❌
+# ADF with 5 lags: residuals OK? OK ✅
+
+# 1c) run the ADF test allowing for an intercept + trend
 adf_trend3 <- ur.df(
   y3,
-  type       = "trend",    # intercept + time trend
-  selectlags = "AIC"       # choose optimal lag length
+  type       = "none",    # no intercept and no trend
+  lags = 5       # choose optimal lag length
 )
 
-# 1c) inspect the output
+# 1d) inspect the output
 summary(adf_trend3)
 
 
@@ -275,40 +356,40 @@ summary(adf_trend3)
 # Augmented Dickey-Fuller Test Unit Root Test # 
 ############################################### 
 
-# Test regression trend 
+# Test regression none 
 # 
 # 
 # Call:
-#   lm(formula = z.diff ~ z.lag.1 + 1 + tt + z.diff.lag)
+#   lm(formula = z.diff ~ z.lag.1 - 1 + z.diff.lag)
 # 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -45.161  -1.756   0.094   2.270  30.525 
+# -46.075  -2.116  -0.391   1.803  21.905 
 # 
 # Coefficients:
 #   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)  0.021780   0.841340   0.026    0.979    
-# z.lag.1     -1.398209   0.093980 -14.878  < 2e-16 ***
-#   tt          -0.002706   0.006094  -0.444    0.657    
-# z.diff.lag   0.262852   0.063184   4.160 4.47e-05 ***
-#   ---
+# z.lag.1     -2.28954    0.24724  -9.260  < 2e-16 ***
+#   z.diff.lag1  1.05822    0.21746   4.866 2.12e-06 ***
+#   z.diff.lag2  0.69133    0.18348   3.768 0.000209 ***
+#   z.diff.lag3  0.43989    0.14452   3.044 0.002609 ** 
+#   z.diff.lag4  0.22703    0.10324   2.199 0.028883 *  
+#   z.diff.lag5  0.09011    0.06558   1.374 0.170791    
+# ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 6.415 on 233 degrees of freedom
-# Multiple R-squared:  0.5847,	Adjusted R-squared:  0.5793 
-# F-statistic: 109.3 on 3 and 233 DF,  p-value: < 2.2e-16
+# Residual standard error: 6.24 on 229 degrees of freedom
+# Multiple R-squared:  0.6135,	Adjusted R-squared:  0.6034 
+# F-statistic: 60.59 on 6 and 229 DF,  p-value: < 2.2e-16
 # 
 # 
-# Value of test-statistic is: -14.8777 73.7838 110.6744 
+# Value of test-statistic is: -9.2604 
 # 
 # Critical values for test statistics: 
 #   1pct  5pct 10pct
-# tau3 -3.99 -3.43 -3.13
-# phi2  6.22  4.75  4.07
-# phi3  8.43  6.49  5.47
+# tau1 -2.58 -1.95 -1.62
 
 
-#This time, we observe no more trend and drift, but the lag 1 coefficient is significant! 
+#This time, we observe no more trend and drift, and the serie is stationary without a trend and a constant ! 
 
 
 #recheck the graph of moving average and rolling volatility 
